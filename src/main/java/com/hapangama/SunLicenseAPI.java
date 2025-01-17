@@ -38,6 +38,15 @@ public class SunLicenseAPI {
     }
 
     public static SunLicenseAPI getLicenseFromFile(String filePath, int productId, String productVersion, String LicenseServerUrl) throws IOException {
+
+        if (filePath == null || filePath.isEmpty()) {
+            throw new IllegalArgumentException("File path is missing.");
+        }
+
+        if (LicenseServerUrl == null || LicenseServerUrl.isEmpty()) {
+            throw new IllegalArgumentException("License server URL is missing.");
+        }
+
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String licenseKey = br.readLine();
             if (licenseKey != null) {
@@ -49,10 +58,25 @@ public class SunLicenseAPI {
     }
 
     public static SunLicenseAPI getLicense(String licenseKey, int productId, String productVersion, String LicenseServerUrl) {
+
+
+        if (LicenseServerUrl == null || LicenseServerUrl.isEmpty()) {
+            throw new IllegalArgumentException("License server URL is missing.");
+        }
+
+        if (LicenseServerUrl != null && LicenseServerUrl.endsWith("/")) {
+            LicenseServerUrl = LicenseServerUrl.substring(0, LicenseServerUrl.length() - 1);
+        }
+
         return new SunLicenseAPI(licenseKey, productId, productVersion, LicenseServerUrl);
     }
 
     public void validate() throws IOException {
+
+        if (licenseKey == null || licenseKey.isEmpty()) {
+            throw new IllegalArgumentException("License key is missing.");
+        }
+
         String jsonInputString = String.format(
                 "{\"licenseKey\": \"%s\", \"productId\": %d, \"productVersion\": \"%s\", \"hwid\": \"%s\", \"macAddress\": \"%s\", \"operatingSystem\": \"%s\", \"operatingSystemVersion\": \"%s\", \"operatingSystemArchitecture\": \"%s\", \"javaVersion\": \"%s\"}",
                 licenseKey, productId, productVersion, hwid, macAddress, operatingSystem, operatingSystemVersion, operatingSystemArchitecture, javaVersion
@@ -72,7 +96,7 @@ public class SunLicenseAPI {
 
         int responseCode = conn.getResponseCode();
         if (responseCode != 200) {
-            throw new RuntimeException("Invalid license. Response Code: " + responseCode);
+            throw new RuntimeException("Invalid license. Response Code: " + responseCode + " : " + conn.getResponseMessage());
         }
     }
 
