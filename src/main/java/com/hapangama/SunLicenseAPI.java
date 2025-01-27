@@ -7,12 +7,14 @@ import java.net.HttpURLConnection;
 import java.net.NetworkInterface;
 import java.net.URL;
 import java.io.OutputStream;
+import java.security.MessageDigest;
 import java.util.Enumeration;
 
 public class SunLicenseAPI {
 
     private static final String API_URL_SUFFIX = "/api/v1/validate";
 
+    private String ip;
     private String url;
     private String licenseKey;
     private int productId;
@@ -29,7 +31,7 @@ public class SunLicenseAPI {
         this.productId = productId;
         this.productVersion = productVersion;
         this.url = url;
-        this.hwid = generateHWID();
+        this.hwid = getHWID();
         this.macAddress = getMacAddress();
         this.operatingSystem = System.getProperty("os.name");
         this.operatingSystemVersion = System.getProperty("os.version");
@@ -59,7 +61,6 @@ public class SunLicenseAPI {
 
     public static SunLicenseAPI getLicense(String licenseKey, int productId, String productVersion, String LicenseServerUrl) {
 
-
         if (LicenseServerUrl == null || LicenseServerUrl.isEmpty()) {
             throw new IllegalArgumentException("License server URL is missing.");
         }
@@ -78,8 +79,9 @@ public class SunLicenseAPI {
         }
 
         String jsonInputString = String.format(
-                "{\"licenseKey\": \"%s\", \"productId\": %d, \"productVersion\": \"%s\", \"hwid\": \"%s\", \"macAddress\": \"%s\", \"operatingSystem\": \"%s\", \"operatingSystemVersion\": \"%s\", \"operatingSystemArchitecture\": \"%s\", \"javaVersion\": \"%s\"}",
-                licenseKey, productId, productVersion, hwid, macAddress, operatingSystem, operatingSystemVersion, operatingSystemArchitecture, javaVersion
+                "{\"licenseKey\": \"%s\", \"productId\": %d, \"productVersion\": \"%s\", \"hwid\": \"%s\", \"macAddress\": \"%s\", \"operatingSystem\": \"%s\", \"operatingSystemVersion\": \"%s\", \"operatingSystemArchitecture\": \"%s\", \"javaVersion\": \"%s\"%s}",
+                licenseKey, productId, productVersion, hwid, macAddress, operatingSystem, operatingSystemVersion, operatingSystemArchitecture, javaVersion,
+                (ip != null && !ip.isEmpty()) ? String.format(", \"ip\": \"%s\"", ip) : ""
         );
 
         URL url = new URL(this.url + API_URL_SUFFIX);
@@ -100,24 +102,26 @@ public class SunLicenseAPI {
         }
     }
 
-    private static String generateHWID() {
+    public static String getHWID() {
         try {
-            Enumeration<NetworkInterface> networks = NetworkInterface.getNetworkInterfaces();
-            while (networks.hasMoreElements()) {
-                NetworkInterface network = networks.nextElement();
-                byte[] macArray = network.getHardwareAddress();
-                if (macArray != null) {
-                    StringBuilder hwid = new StringBuilder();
-                    for (byte b : macArray) {
-                        hwid.append(String.format("%02X", b));
-                    }
-                    return hwid.toString();
-                }
+            String toEncrypt = System.getenv("COMPUTERNAME") + System.getProperty("user.name") + System.getenv("PROCESSOR_IDENTIFIER") + System.getenv("PROCESSOR_LEVEL");
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(toEncrypt.getBytes());
+            StringBuffer hexString = new StringBuffer();
+
+            byte byteData[] = md.digest();
+
+            for (byte aByteData : byteData) {
+                String hex = Integer.toHexString(0xff & aByteData);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
             }
+
+            return hexString.toString();
         } catch (Exception e) {
             e.printStackTrace();
+            return "Error";
         }
-        return "default-hwid"; // Default HWID if none found
     }
 
     private static String getMacAddress() {
@@ -143,4 +147,90 @@ public class SunLicenseAPI {
         return "00:1A:2B:3C:4D:5E"; // Default MAC address if none found
     }
 
+
+    // Getters and Setters
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getLicenseKey() {
+        return licenseKey;
+    }
+
+    public void setLicenseKey(String licenseKey) {
+        this.licenseKey = licenseKey;
+    }
+
+    public int getProductId() {
+        return productId;
+    }
+
+    public void setProductId(int productId) {
+        this.productId = productId;
+    }
+
+    public String getProductVersion() {
+        return productVersion;
+    }
+
+    public void setProductVersion(String productVersion) {
+        this.productVersion = productVersion;
+    }
+
+    public String getHwid() {
+        return hwid;
+    }
+
+    public void setHwid(String hwid) {
+        this.hwid = hwid;
+    }
+
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
+    }
+
+    public String getOperatingSystem() {
+        return operatingSystem;
+    }
+
+    public void setOperatingSystem(String operatingSystem) {
+        this.operatingSystem = operatingSystem;
+    }
+
+    public String getOperatingSystemVersion() {
+        return operatingSystemVersion;
+    }
+
+    public void setOperatingSystemVersion(String operatingSystemVersion) {
+        this.operatingSystemVersion = operatingSystemVersion;
+    }
+
+    public String getOperatingSystemArchitecture() {
+        return operatingSystemArchitecture;
+    }
+
+    public void setOperatingSystemArchitecture(String operatingSystemArchitecture) {
+        this.operatingSystemArchitecture = operatingSystemArchitecture;
+    }
+
+    public String getJavaVersion() {
+        return javaVersion;
+    }
+
+    public void setJavaVersion(String javaVersion) {
+        this.javaVersion = javaVersion;
+    }
 }
