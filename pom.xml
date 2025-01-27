@@ -6,7 +6,7 @@
 
     <groupId>com.hapangama</groupId>
     <artifactId>SunLicenseAPI</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <packaging>jar</packaging>
     <name>Sun License API</name>
     <description>A Java wrapper for SunLicense API</description>
